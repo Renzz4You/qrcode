@@ -5,14 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QRIS Name Editor</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Library Scanner -->
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
-    <!-- Library Generator -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
     
     <style>
         :root {
@@ -246,9 +244,482 @@
         .comparison-item.changed { border-left-color: #f59e0b; }
 
         @media (max-width: 640px) { .main-container { padding: 1rem; } .card { padding: 1.25rem; } .btn-group { flex-direction: column; } .btn { width: 100%; } }
+
+        /* ============================================
+           PREMIUM POPUP STYLES
+           ============================================ */
+        
+        .popup-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .popup-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .popup-overlay.hiding {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .popup-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.98) 100%);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 520px;
+            box-shadow: 
+                0 0 0 1px rgba(255, 255, 255, 0.3),
+                0 25px 50px -12px rgba(0, 0, 0, 0.25),
+                0 12px 24px -8px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            position: relative;
+            overflow: hidden;
+            transform: scale(0.85) translateY(20px);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .popup-overlay.show .popup-card {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+        }
+
+        .popup-overlay.hiding .popup-card {
+            transform: scale(0.9) translateY(10px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 1, 1);
+        }
+
+        /* Decorative gradient line at top */
+        .popup-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #2563eb 0%, #3b82f6 50%, #06b6d4 100%);
+        }
+
+        .popup-header {
+            padding: 2rem 2rem 1.5rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .popup-icon-container {
+            width: 72px;
+            height: 72px;
+            margin: 0 auto 1.25rem;
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 
+                0 8px 24px -4px rgba(37, 99, 235, 0.35),
+                0 4px 8px -2px rgba(37, 99, 235, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            position: relative;
+        }
+
+        .popup-icon-container::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 24px;
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.2) 0%, rgba(6, 182, 212, 0.2) 100%);
+            z-index: -1;
+            filter: blur(8px);
+        }
+
+        .popup-icon-container svg {
+            width: 36px;
+            height: 36px;
+            color: white;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+        }
+
+        .popup-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+            line-height: 1.3;
+        }
+
+        .popup-subtitle {
+            font-size: 0.95rem;
+            color: #64748b;
+            font-weight: 500;
+            line-height: 1.5;
+        }
+
+        .popup-body {
+            padding: 0 2rem 1.5rem;
+        }
+
+        .popup-intro {
+            font-size: 0.95rem;
+            color: #334155;
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+            padding: 1rem 1.25rem;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 14px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .popup-sections {
+            display: grid;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .popup-section-card {
+            padding: 1.25rem;
+            border-radius: 14px;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .popup-section-card.supported {
+            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+            border-color: #bbf7d0;
+        }
+
+        .popup-section-card.unsupported {
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            border-color: #fecaca;
+        }
+
+        .popup-section-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .popup-section-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .popup-section-card.supported .popup-section-icon {
+            background: #22c55e;
+            color: white;
+            box-shadow: 0 4px 12px -2px rgba(34, 197, 94, 0.4);
+        }
+
+        .popup-section-card.unsupported .popup-section-icon {
+            background: #ef4444;
+            color: white;
+            box-shadow: 0 4px 12px -2px rgba(239, 68, 68, 0.4);
+        }
+
+        .popup-section-icon svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .popup-section-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .popup-section-card.supported .popup-section-title { color: #15803d; }
+        .popup-section-card.unsupported .popup-section-title { color: #dc2626; }
+
+        .popup-section-content {
+            font-size: 0.925rem;
+            color: #334155;
+            font-weight: 500;
+            line-height: 1.6;
+            padding-left: 0.25rem;
+        }
+
+        .popup-note {
+            background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
+            border: 1px solid #bfdbfe;
+            border-radius: 14px;
+            padding: 1rem 1.25rem;
+        }
+
+        .popup-note-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+            color: #1e40af;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .popup-note-header svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .popup-note-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .popup-note-list li {
+            position: relative;
+            padding-left: 1.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            color: #475569;
+            line-height: 1.5;
+        }
+
+        .popup-note-list li:last-child {
+            margin-bottom: 0;
+        }
+
+        .popup-note-list li::before {
+            content: '';
+            position: absolute;
+            left: 0.25rem;
+            top: 0.5rem;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #3b82f6;
+        }
+
+        .popup-footer {
+            padding: 0 2rem 2rem;
+        }
+
+        .btn-confirm {
+            width: 100%;
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: white;
+            font-weight: 700;
+            font-size: 1rem;
+            padding: 1rem 2rem;
+            border-radius: 14px;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.625rem;
+            box-shadow: 
+                0 4px 14px -2px rgba(37, 99, 235, 0.5),
+                0 2px 4px -1px rgba(37, 99, 235, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-confirm::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 50%);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .btn-confirm:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 8px 24px -4px rgba(37, 99, 235, 0.5),
+                0 4px 8px -2px rgba(37, 99, 235, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-confirm:hover::before {
+            opacity: 1;
+        }
+
+        .btn-confirm:active {
+            transform: translateY(0);
+            box-shadow: 
+                0 4px 12px -2px rgba(37, 99, 235, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-confirm svg {
+            width: 20px;
+            height: 20px;
+            transition: transform 0.2s ease;
+        }
+
+        .btn-confirm:hover svg {
+            transform: scale(1.1);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 640px) {
+            .popup-overlay {
+                padding: 0.75rem;
+                align-items: flex-end;
+            }
+
+            .popup-card {
+                border-radius: 20px 20px 0 0;
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+
+            .popup-card::before {
+                border-radius: 20px 20px 0 0;
+            }
+
+            .popup-header {
+                padding: 1.5rem 1.5rem 1.25rem;
+            }
+
+            .popup-icon-container {
+                width: 64px;
+                height: 64px;
+                border-radius: 16px;
+                margin-bottom: 1rem;
+            }
+
+            .popup-icon-container::after {
+                border-radius: 20px;
+            }
+
+            .popup-title {
+                font-size: 1.35rem;
+            }
+
+            .popup-body {
+                padding: 0 1.5rem 1.25rem;
+            }
+
+            .popup-intro {
+                padding: 0.875rem 1rem;
+            }
+
+            .popup-section-card {
+                padding: 1rem;
+            }
+
+            .popup-footer {
+                padding: 0 1.5rem 1.5rem;
+            }
+
+            .btn-confirm {
+                padding: 0.875rem 1.5rem;
+            }
+        }
     </style>
 </head>
 <body>
+
+    <!-- PREMIUM POPUP ANNOUNCEMENT -->
+    <div class="popup-overlay" id="announcementPopup">
+        <div class="popup-card">
+            <!-- Header -->
+            <div class="popup-header">
+                <div class="popup-icon-container">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7"/>
+                        <rect x="14" y="3" width="7" height="7"/>
+                        <rect x="14" y="14" width="7" height="7"/>
+                        <rect x="3" y="14" width="7" height="7"/>
+                    </svg>
+                </div>
+                <h2 class="popup-title">Pengumuman Dukungan Merchant QRIS</h2>
+                <p class="popup-subtitle">Informasi penting mengenai kompatibilitas layanan</p>
+            </div>
+
+            <!-- Body -->
+            <div class="popup-body">
+                <div class="popup-intro">
+                    Untuk saat ini, fitur perubahan nama merchant pada website hanya mendukung <strong>DANA Merchant</strong>. Beberapa merchant QRIS lainnya belum dapat didukung karena terhubung langsung ke server penyedia layanan.
+                </div>
+
+                <div class="popup-sections">
+                    <!-- Supported -->
+                    <div class="popup-section-card supported">
+                        <div class="popup-section-header">
+                            <div class="popup-section-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                            </div>
+                            <span class="popup-section-title">Merchant Didukung</span>
+                        </div>
+                        <div class="popup-section-content">DANA Merchant</div>
+                    </div>
+
+                    <!-- Unsupported -->
+                    <div class="popup-section-card unsupported">
+                        <div class="popup-section-header">
+                            <div class="popup-section-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18"/>
+                                    <line x1="6" y1="6" x2="18" y2="18"/>
+                                </svg>
+                            </div>
+                            <span class="popup-section-title">Belum Didukung</span>
+                        </div>
+                        <div class="popup-section-content">GoPay Merchant dan merchant lain yang terhubung langsung ke server penyedia layanan</div>
+                    </div>
+                </div>
+
+                <!-- Note -->
+                <div class="popup-note">
+                    <div class="popup-note-header">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="12" y1="16" x2="12" y2="12"/>
+                            <line x1="12" y1="8" x2="12.01" y2="8"/>
+                        </svg>
+                        Catatan Penting
+                    </div>
+                    <ul class="popup-note-list">
+                        <li>Pembatasan ini dilakukan untuk menjaga keakuratan dan integritas data merchant.</li>
+                        <li>Dukungan merchant dapat berubah sewaktu-waktu sesuai kebijakan penyedia layanan.</li>
+                        <li>Gunakan merchant yang didukung untuk pengalaman penggunaan yang optimal.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="popup-footer">
+                <button class="btn-confirm" onclick="closePopup()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    Saya Mengerti
+                </button>
+            </div>
+        </div>
+    </div>
+
     <main class="main-container">
         <header class="header">
             <div class="logo-badge">
@@ -279,7 +750,6 @@
 
         <div id="statusContainer"></div>
 
-        <!-- Original QR Section -->
         <section class="card fade-in" id="decodeSection" style="display: none;">
             <div class="card-header">
                 <div class="card-icon">
@@ -310,7 +780,6 @@
             </div>
         </section>
 
-        <!-- Edit Form -->
         <section class="card fade-in" id="editSection" style="display: none;">
             <div class="card-header">
                 <div class="card-icon">
@@ -354,7 +823,6 @@
             </div>
         </section>
 
-        <!-- Result Section -->
         <section class="card fade-in" id="resultSection" style="display: none;">
             <div class="card-header">
                 <div class="card-icon">
@@ -384,7 +852,6 @@
             </div>
         </section>
 
-        <!-- History -->
         <section class="card fade-in" id="historySection">
             <div class="card-header">
                 <div class="card-icon">
@@ -416,7 +883,7 @@
                     <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
                     <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
                 </svg>
-                Made with @rskl411_
+                Made with Instagram rskl411_
             </a>
         </footer>
     </main>
@@ -436,26 +903,36 @@
             resultSection: document.getElementById('resultSection'),
             statusContainer: document.getElementById('statusContainer'),
             historyTable: document.getElementById('historyTable'),
-            
             originalQrRender: document.getElementById('originalQrRender'),
             rawStringData: document.getElementById('rawStringData'),
             parsedDataDiv: document.getElementById('parsedData'),
-            
             merchantName: document.getElementById('merchantName'),
             merchantCity: document.getElementById('merchantCity'),
             postalCode: document.getElementById('postalCode'),
-            
             newQrRender: document.getElementById('newQrRender'),
             newRawStringData: document.getElementById('newRawStringData'),
             comparisonData: document.getElementById('comparisonData'),
-            
             changeBtn: document.getElementById('changeBtn'),
             resetBtn: document.getElementById('resetBtn')
         };
 
-        // --- QRIS Core Functions ---
+        // --- Popup Logic ---
+        function showPopup() {
+            const overlay = document.getElementById('announcementPopup');
+            overlay.classList.remove('hiding');
+            overlay.classList.add('show');
+        }
 
-        // CRC16 CCITT-FALSE Implementation
+        function closePopup() {
+            const overlay = document.getElementById('announcementPopup');
+            overlay.classList.add('hiding');
+            overlay.classList.remove('show');
+        }
+
+        // Show popup on load
+        window.addEventListener('load', showPopup);
+
+        // --- QRIS Core Functions ---
         function calculateCRC16(str) {
             let crc = 0xFFFF;
             const polynomial = 0x1021;
@@ -473,7 +950,6 @@
             return crc.toString(16).toUpperCase().padStart(4, '0');
         }
 
-        // Parse QRIS String
         function parseQRIS(str) {
             const data = { merchantName: '', city: '', postalCode: '', raw: str };
             let i = 0;
@@ -490,9 +966,7 @@
             return data;
         }
 
-        // Generate Modified QRIS String
         function generateModifiedQris(original, newName, newCity, newPostal) {
-            // 1. Parse original string parts while keeping order
             let parts = [];
             let i = 0;
             while(i < original.length) {
@@ -505,39 +979,30 @@
                 i += 4 + len;
             }
 
-            // 2. Rebuild string with modifications
             let newStr = "";
             parts.forEach(p => {
                 let v = p.val;
-                // Modify specific tags
                 if (p.id === '59') v = newName;
                 if (p.id === '60') v = newCity;
                 if (p.id === '61') v = newPostal;
-                
-                // Skip CRC tag (will be recalculated)
                 if (p.id === '63') return;
-
-                // Append ID + LEN(2digits) + VALUE
                 newStr += p.id + v.length.toString().padStart(2, '0') + v;
             });
 
-            // 3. Calculate new CRC
-            const payload = newStr + "6304"; // Append CRC Tag ID + Length 04
+            const payload = newStr + "6304";
             const checksum = calculateCRC16(payload);
-            
             return payload + checksum;
         }
 
         // --- UI Logic ---
-
         function showStatus(msg, type) {
             const icons = {
                 success: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
                 error: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
                 info: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
             };
-            el.statusContainer.innerHTML = `<div class="status status-${type}">${icons[type]}<span>${msg}</span></div>`;
-            if (type !== 'error') setTimeout(() => el.statusContainer.innerHTML = '', 4000);
+            el.statusContainer.innerHTML = '<div class="status status-' + type + '">' + icons[type] + '<span>' + msg + '</span></div>';
+            if (type !== 'error') setTimeout(function() { el.statusContainer.innerHTML = ''; }, 4000);
         }
 
         function renderHistory() {
@@ -545,22 +1010,14 @@
             try { history = JSON.parse(localStorage.getItem('qrisHistory')) || []; } catch (e) {}
             
             if (history.length === 0) {
-                el.historyTable.innerHTML = `<div class="empty-state"><svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><p>No activity yet.</p></div>`;
+                el.historyTable.innerHTML = '<div class="empty-state"><svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><p>No activity yet.</p></div>';
                 return;
             }
 
-            let html = `<table class="data-table"><thead><tr><th>Time</th><th>Old Name</th><th>New Name</th><th>Old City</th><th>New City</th><th>Old Postal</th><th>New Postal</th></tr></thead><tbody>`;
-            history.forEach(h => {
+            let html = '<table class="data-table"><thead><tr><th>Time</th><th>Old Name</th><th>New Name</th><th>Old City</th><th>New City</th><th>Old Postal</th><th>New Postal</th></tr></thead><tbody>';
+            history.forEach(function(h) {
                 const d = new Date(h.timestamp);
-                html += `<tr>
-                    <td>${d.toLocaleString('id-ID')}</td>
-                    <td>${h.oldName}</td>
-                    <td>${h.newName}</td>
-                    <td>${h.oldCity}</td>
-                    <td>${h.newCity}</td>
-                    <td>${h.oldPostal}</td>
-                    <td>${h.newPostal}</td>
-                </tr>`;
+                html += '<tr><td>' + d.toLocaleString('id-ID') + '</td><td>' + h.oldName + '</td><td>' + h.newName + '</td><td>' + h.oldCity + '</td><td>' + h.newCity + '</td><td>' + h.oldPostal + '</td><td>' + h.newPostal + '</td></tr>';
             });
             html += '</tbody></table>';
             el.historyTable.innerHTML = html;
@@ -586,7 +1043,6 @@
         }
 
         // --- Core Actions ---
-
         function handleFile(file) {
             if (!file || !file.type.startsWith('image/')) {
                 showStatus('Invalid file type.', 'error');
@@ -635,9 +1091,9 @@
             el.postalCode.value = parsedData.postalCode;
 
             let pHtml = '';
-            pHtml += `<div class="data-item"><div class="data-label">Merchant Name</div><div class="data-value">${parsedData.merchantName || '-'}</div></div>`;
-            pHtml += `<div class="data-item"><div class="data-label">City</div><div class="data-value">${parsedData.city || '-'}</div></div>`;
-            pHtml += `<div class="data-item"><div class="data-label">Postal Code</div><div class="data-value">${parsedData.postalCode || '-'}</div></div>`;
+            pHtml += '<div class="data-item"><div class="data-label">Merchant Name</div><div class="data-value">' + (parsedData.merchantName || '-') + '</div></div>';
+            pHtml += '<div class="data-item"><div class="data-label">City</div><div class="data-value">' + (parsedData.city || '-') + '</div></div>';
+            pHtml += '<div class="data-item"><div class="data-label">Postal Code</div><div class="data-value">' + (parsedData.postalCode || '-') + '</div></div>';
             el.parsedDataDiv.innerHTML = pHtml;
 
             el.originalQrRender.innerHTML = ''; 
@@ -668,10 +1124,8 @@
                 return;
             }
 
-            // Generate string QRIS baru dengan CRC yang benar
             const modifiedStr = generateModifiedQris(originalQrisString, newName, newCity, newPostal);
             
-            // Render QR Baru
             el.newQrRender.innerHTML = ''; 
             new QRCode(el.newQrRender, {
                 text: modifiedStr,
@@ -684,7 +1138,6 @@
 
             el.newRawStringData.textContent = modifiedStr;
 
-            // Perbandingan
             const fields = [
                 { k: 'merchantName', l: 'Merchant Name', v: newName },
                 { k: 'city', l: 'City', v: newCity },
@@ -692,16 +1145,11 @@
             ];
             
             let cHtml = '';
-            fields.forEach(f => {
+            fields.forEach(function(f) {
                 const oldV = parsedData[f.k];
                 const newV = f.v;
                 const changed = oldV !== newV;
-                cHtml += `<div class="comparison-item ${changed ? 'changed' : ''}">
-                    <div class="data-label">${f.l}</div>
-                    <div class="data-value" style="font-size:0.85rem">
-                        ${changed ? `<span class="diff-old">${oldV}</span><span class="diff-new">${newV}</span>` : `<span>${newV}</span>`}
-                    </div>
-                </div>`;
+                cHtml += '<div class="comparison-item ' + (changed ? 'changed' : '') + '"><div class="data-label">' + f.l + '</div><div class="data-value" style="font-size:0.85rem">' + (changed ? '<span class="diff-old">' + oldV + '</span><span class="diff-new">' + newV + '</span>' : '<span>' + newV + '</span>') + '</div></div>';
             });
             el.comparisonData.innerHTML = cHtml;
 
@@ -724,15 +1172,15 @@
         }
 
         // --- Event Bindings ---
-        el.uploadArea.addEventListener('click', () => el.fileInput.click());
-        el.uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); el.uploadArea.classList.add('dragover'); });
-        el.uploadArea.addEventListener('dragleave', () => el.uploadArea.classList.remove('dragover'));
-        el.uploadArea.addEventListener('drop', (e) => {
+        el.uploadArea.addEventListener('click', function() { el.fileInput.click(); });
+        el.uploadArea.addEventListener('dragover', function(e) { e.preventDefault(); el.uploadArea.classList.add('dragover'); });
+        el.uploadArea.addEventListener('dragleave', function() { el.uploadArea.classList.remove('dragover'); });
+        el.uploadArea.addEventListener('drop', function(e) {
             e.preventDefault();
             el.uploadArea.classList.remove('dragover');
             handleFile(e.dataTransfer.files[0]);
         });
-        el.fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+        el.fileInput.addEventListener('change', function(e) { handleFile(e.target.files[0]); });
         
         el.changeBtn.addEventListener('click', processChange);
         el.resetBtn.addEventListener('click', resetApp);
